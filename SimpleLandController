@@ -7,15 +7,15 @@ public class SimpleLandController : MonoBehaviour
     [Header("References")]
     [Tooltip("The plane object representing the land surface")]
     public GameObject landPlane;
-    
+
     [Header("Grid Settings")]
     public float cellSize = 1f;
     public int gridSizeX = 10;
     public int gridSizeZ = 10;
-    
+
     // Reference to store the grid cells
     private Vector3[,] gridPositions;
-    
+
     void Start()
     {
         if (landPlane == null)
@@ -23,21 +23,23 @@ public class SimpleLandController : MonoBehaviour
             Debug.LogError("Land plane not assigned to controller!");
             return;
         }
-        
+
         InitializeGrid();
     }
-    
+
     void InitializeGrid()
     {
+        if (landPlane == null) return;
+
         gridPositions = new Vector3[gridSizeX, gridSizeZ];
-        
+
         // Calculate the plane size based on its scale
         Vector3 planeScale = landPlane.transform.localScale;
         Vector3 planeSize = new Vector3(10 * planeScale.x, 0, 10 * planeScale.z); // Default plane is 10x10 units
-        
+
         // Calculate start position (bottom-left corner)
         Vector3 startPos = landPlane.transform.position - new Vector3(planeSize.x / 2, 0, planeSize.z / 2) + new Vector3(cellSize / 2, 0, cellSize / 2);
-        
+
         // Create cell positions
         for (int x = 0; x < gridSizeX; x++)
         {
@@ -46,10 +48,10 @@ public class SimpleLandController : MonoBehaviour
                 gridPositions[x, z] = startPos + new Vector3(x * cellSize, 0, z * cellSize);
             }
         }
-        
+
         Debug.Log("Grid initialized on land plane");
     }
-    
+
     // Example method to place an object at a specific grid cell
     public void PlaceObjectAt(GameObject objectToPlace, int x, int z)
     {
@@ -58,12 +60,20 @@ public class SimpleLandController : MonoBehaviour
             Instantiate(objectToPlace, gridPositions[x, z], Quaternion.identity);
         }
     }
-    
-    // Draw grid in editor for visualization
-    void OnDrawGizmos()
+
+#if UNITY_EDITOR
+    // Draw grid in editor when object is selected
+    void OnDrawGizmosSelected()
     {
-        if (landPlane == null || !Application.isPlaying) return;
-        
+        if (landPlane == null)
+            return;
+
+        // Generate grid if it's missing or not initialized
+        if (gridPositions == null || gridPositions.Length != gridSizeX * gridSizeZ)
+        {
+            InitializeGrid();
+        }
+
         Gizmos.color = Color.white;
         for (int x = 0; x < gridSizeX; x++)
         {
@@ -73,4 +83,5 @@ public class SimpleLandController : MonoBehaviour
             }
         }
     }
+#endif
 }
